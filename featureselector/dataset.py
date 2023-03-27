@@ -157,28 +157,4 @@ class Dataset:
             print("Invalid method. Options: mode, mean")
 
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
 
-    firstrow = np.array([1, 1, None])
-    secondrow = np.array(['a', None, 'c'])
-    thirdrow = np.array([True, None, False])
-    x = [firstrow, secondrow, thirdrow]
-    dataset = Dataset(x, np.array([1, 2, 3]), ['feat1', 'feat2', 'feat3'], 'output')
-    dataset.describe()
-    # dataset.read_csvtsv('example.csv')
-    # dataset.write_csvtsv('result.csv')
-    dataset.count_null_values()
-    dataset.replace_null_values('commonvalues')
-    dataset.describe()
-    '''
-    dictionary={None:10,"a":2,1:3}
-    del dictionary[None]
-    if None in dictionary : del dictionary[None]
-    key_with_max_value = max(dictionary, key=dictionary.get)
-    print(key_with_max_value)
-    if None in dictionary : dictionary[None]=dictionary[None]+1
-    else: dictionary[None]=1
-    print(dictionary[None])
-    '''
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
