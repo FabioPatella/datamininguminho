@@ -45,6 +45,11 @@ class Dataset:
     def set_y(self, new_y):
         self.y = np.array(new_y)
 
+
+    def getinputmatrix(self):
+     return np.vstack(self.x).T
+    def setinputmatrix(self,X):
+        self.x=np.hsplit(X, X.shape[1])
     def read_csvtsv(self, filename, delimiter=",", dataformat='csv'):
         if dataformat == "tsv": delimiter = "\t"
         self.x = []
