@@ -21,7 +21,7 @@ class Dataset:
             raise ValueError("X cannot be empty")
 
         if features is None:
-            features = [str(i) for i in range(x.shape[1])]
+            features = [str(i) for i in range(x.__len__())]
         else:
             features = list(features)
 

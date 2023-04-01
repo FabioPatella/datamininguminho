@@ -7,6 +7,7 @@ import statsmodels.api as sm
 from sklearn import linear_model
 from statsmodels.api import OLS, add_constant
 from scipy.stats import f
+from sklearn.feature_selection import chi2
 
 
 class SelectKBest:
@@ -41,25 +42,24 @@ def f_classif(dataset):
     y=dataset.y
     classes= np.unique(y)
     groups = [X[dataset.y == c] for c in classes]
-    print(groups)
     F, p = f_oneway(*groups)
-    print(p)
     return(F,p)
 
 
 def f_regression(dataset):
     X=dataset.getinputmatrix()
-    print(X)
-    print(dataset.y)
     model = OLS(dataset.y, X).fit()
     return None, model.pvalues
+def f_chi2(dataset):
+    X=dataset.getinputmatrix()
+    chi2_scores, p_values = chi2(X, dataset.y)
+    return chi2_scores, p_values
 
 
 if __name__ == '__main__':
 
-
-
     #linear regression test
+    print("linear regression selection:")
     X= [np.array([1.1,2,3,4,5]),np.array([2,4,6,8,10])]
     y = np.array([2, 4, 6, 8, 10])
     dataset = Dataset(X, y, ['feat1', 'feat2'], 'output')
@@ -70,6 +70,7 @@ if __name__ == '__main__':
     dataset.describe()
 
     #anova test
+    print("anova selection:")
     X = [np.array([1.1, 2, 3, 4, 5]), np.array([2, 4, 6, 8, 10])]
     y = np.array([2, 4, 4, 8, 10])
     dataset = Dataset(X, y, ['feat1', 'feat2'], 'output')
@@ -78,5 +79,16 @@ if __name__ == '__main__':
     selectk = selectk.fit(dataset)
     selectk.transform(dataset)
     dataset.describe()
+    #chi2 test
+    print("chi2 selection:")
+    X = [np.array([1.1, 2, 3, 4, 5]), np.array([2, 4, 6, 8, 10])]
+    y = np.array([2, 4, 4, 8, 10])
+    dataset = Dataset(X, y, ['feat1', 'feat2'], 'output')
+    dataset.describe()
+    selectk = SelectKBest(f_chi2, 1)
+    selectk = selectk.fit(dataset)
+    selectk.transform(dataset)
+    dataset.describe()
+
 
 

@@ -21,7 +21,7 @@ class Dataset:
             raise ValueError("X cannot be empty")
 
         if features is None:
-            features = [str(i) for i in range(x.shape[1])]
+            features = [str(i) for i in range(x.__len__())]
         else:
             features = list(features)
 
@@ -116,7 +116,10 @@ class Dataset:
                 if(self.x[indexrow][indexcolumn] is None): columncount=columncount+1
             print(self.features[indexrow]," null values are ",columncount)
 
-
+    def getinputmatrix(self):
+     return np.vstack(self.x).T
+    def setinputmatrix(self,X):
+        self.x=np.hsplit(X, X.shape[1])
     def replace_null_values(self, method='commonvalues'):
         if method == 'commonvalues':
          for index in range(self.x.__len__()):
@@ -157,10 +160,57 @@ class Dataset:
             print("Invalid method. Options: mode, mean")
 
 
+
+
+    def select_rows_by_position(self, positions: Sequence[int]) -> 'Dataset':
+            """
+            Select rows based on their positions in the dataset
+
+            :param positions: List of row indices to select
+            :return: A new dataset object with only the selected rows
+            """
+            new_x = [self.x[i] for i in positions]
+            new_y = self.y[positions] if self.y is not None else None
+            return Dataset(new_x, new_y, self.features, self.label)
+
+    def select_columns_by_position(self, positions: Sequence[int]) -> 'Dataset':
+            """
+            Select columns based on their positions in the dataset
+
+            :param positions: List of column indices to select
+            :return: A new dataset object with only the selected columns
+            """
+            new_x = [self.x[i] for i in positions]
+            new_features = [self.features[i] for i in positions]
+            return Dataset(new_x, self.y, new_features, self.label)
+
+    def sort_by_feature(self, feature_name, ascending=True):
+        index = self.features.index(feature_name)
+        order = np.argsort(self.x[index])
+        if not ascending:
+            order = np.flip(order)
+        new_x = [x[order] for x in self.x]
+        new_y = self.y[order] if self.y is not None else None
+        return Dataset(new_x, new_y, self.features, self.label)
+
+    def remove_features(self, feature_names):
+        new_features = [feat for feat in self.features if feat not in feature_names]
+        new_x = []
+        for i in range(len(self.features)):
+            if self.features[i] not in feature_names:
+                new_x.append(self.x[i])
+        new_y = self.y if self.y is not None else None
+        return Dataset(new_x, new_y, new_features, self.label)
+
+
+
+
+
+
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
-    firstrow = np.array([1, 1, None])
+    firstrow = np.array([1, 1, 2])
     secondrow = np.array(['a', None, 'c'])
     thirdrow = np.array([True, None, False])
     x = [firstrow, secondrow, thirdrow]
@@ -171,14 +221,13 @@ if __name__ == '__main__':
     dataset.count_null_values()
     dataset.replace_null_values('commonvalues')
     dataset.describe()
-    '''
-    dictionary={None:10,"a":2,1:3}
-    del dictionary[None]
-    if None in dictionary : del dictionary[None]
-    key_with_max_value = max(dictionary, key=dictionary.get)
-    print(key_with_max_value)
-    if None in dictionary : dictionary[None]=dictionary[None]+1
-    else: dictionary[None]=1
-    print(dictionary[None])
-    '''
+    print("testing optional methods:")
+    newdataset= dataset.select_rows_by_position([1,2])
+    dataset.select_columns_by_position([1,2]).describe()
+    dataset.sort_by_feature("feat1",False).describe()
+    dataset.remove_features(["feat1","feat2"]).describe()
+
+
+
+
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/
