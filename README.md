@@ -14,7 +14,7 @@ Implemented optional features:
    tested  with coverage 90-95%
    
    
-3)decision trees : optional features implementation is in progress as well as testing
+3)decision trees : optional features implementation is in progress. Tested with 90% coverage
 
 
 4)NaiveBayes&Prism: Pseudocounts for the Naive Bayes classifier  , Have an option to use logarithms in the constructor.  Naive Bayes for text classification is in progress
