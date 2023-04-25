@@ -3,21 +3,58 @@ import numpy as np
 
 class DecisionTree:
     def __init__(self, criterion='entropy', max_depth=None):
+        """
+                Initialize a DecisionTree object with the given parameters.
+
+                Args:
+                - criterion: the splitting criterion to use. Default is 'entropy'.
+                - max_depth: the maximum depth of the decision tree. Default is None.
+                """
         self.criterion = criterion
         self.max_depth = max_depth
         self.tree = None
 
 
     def fit(self, X, y):
+        """
+                Build a decision tree based on the input data X and labels y.
+
+                Args:
+                - X: input data, a numpy array of shape (number of samples, number of features).
+                - y: labels, a numpy array of shape (number of samples,).
+
+                Returns:
+                - None
+                """
         self.tree = self._build_tree(X, y)
 
     def predict(self, X):
+        """
+               Predict the label of each sample in X using the trained decision tree.
+
+               Args:
+               - X: input data, a numpy array of shape (number of samples, number of features).
+
+               Returns:
+               - y_pred: predicted labels, a numpy array of shape (number of samples,).
+               """
         return np.array([self._predict(x, self.tree) for x in X])
 
     def get_tree(self):
         return self.tree
 
     def _build_tree(self, X, y, depth=0):
+        """
+                Build a decision tree recursively using the given data and labels.
+
+                Args:
+                - X: input data, a numpy array of shape (number of samples, number of features).
+                - y: labels, a numpy array of shape (number of samples,).
+                - depth: the current depth of the tree. Default is 0.
+
+                Returns:
+                - tree: a dictionary representing the decision tree.
+                """
         number_samples, number_features = X.shape
         classes = np.unique(y)
         number_classes = len(classes)
@@ -48,15 +85,23 @@ class DecisionTree:
 
     def _predict(self, x, tree):
         if isinstance(tree, np.ndarray):
+            # if tree is already a leaf node, return the class label
             return tree
+        # get the feature to split on for this node
         feature = next(iter(tree))
+        # get the feature value for the current example
         value = x[feature]
+        # check if the feature value is present in the tree
         if value not in tree[feature]:
+            # if not, resolve the conflict by selecting the most frequent class label
             return self._resolve_conflict(list(tree[feature].values()))
+        # get the subtree corresponding to the feature value
         sub_tree = tree[feature][value]
+        # recursively predict using the subtree
         return self._predict(x, sub_tree)
 
     def _information_gain(self, X, y, feature):
+        # Calculate the information gain of a given feature
         if self.criterion == 'entropy':
             parent_entropy = self._entropy(y)
         elif self.criterion == 'gini':
@@ -66,29 +111,32 @@ class DecisionTree:
             intrinsic_value = self._intrinsic_value(X, feature)
             if intrinsic_value == 0:
                 return 0
-            return (parent_entropy - self._entropy_gain(X, y, feature)) / intrinsic_value
+            return (parent_entropy - self._entropy_gain(X, y, feature)) / intrinsic_value # Calculate information gain using entropy gain and intrinsic value
 
-        n_samples = len(y)
-        values, counts = np.unique(X[:, feature], return_counts=True)
-        children_entropy = 0
-        for value, count in zip(values, counts):
-            mask = X[:, feature] == value
-            child_y = y[mask]
-            child_entropy = self._entropy(child_y) if self.criterion == 'entropy' else self._gini(child_y)
-            children_entropy += count / n_samples * child_entropy
-        return parent_entropy - children_entropy
+        n_samples = len(y) # Total number of samples in the dataset
+        values, counts = np.unique(X[:, feature], return_counts=True) # Find unique feature values and their counts
+        children_entropy = 0  # Initialize children entropy
+        for value, count in zip(values, counts): # Loop over each unique feature value
+            mask = X[:, feature] == value # Create a boolean mask for the samples having this value
+            child_y = y[mask] # Get corresponding target values for the selected samples
+            child_entropy = self._entropy(child_y) if self.criterion == 'entropy' else self._gini(child_y) # Calculate child node's entropy using _entropy() or _gini() method
+            children_entropy += count / n_samples * child_entropy # Calculate weighted average of child node's entropy
+        return parent_entropy - children_entropy # Calculate and return information gain
 
     def _entropy(self, y):
+        # Calculate entropy of a target variable
         _, counts = np.unique(y, return_counts=True)
         probabilities = counts / len(y)
         return -np.sum(probabilities * np.log2(probabilities + 1e-6))
 
     def _gini(self, y):
+        # Calculate Gini index of a target variable
         _, counts = np.unique(y, return_counts=True)
         probabilities = counts / len(y)
         return 1 - np.sum(probabilities ** 2)
 
     def _entropy_gain(self, X, y, feature):
+        # Calculate entropy gain of a feature
         n_samples = len(y)
         values, counts = np.unique(X[:, feature], return_counts=True)
         children_entropy = 0
@@ -139,7 +187,6 @@ def view_tree(tree,embedded_values):
 
 
 
-# Press the green button in the gutter to run the script.
 if __name__ == '__main__':
 
     # Define the input features
@@ -205,8 +252,3 @@ if __name__ == '__main__':
     decisiontree.fit(X, y)
     print(decisiontree.get_tree())
     view_tree(decisiontree.get_tree(), value_encoding)
-
-
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
