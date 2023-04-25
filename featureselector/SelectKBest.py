@@ -2,58 +2,62 @@ import numpy as np
 from scipy.stats import f_oneway
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.linear_model import LinearRegression
-from dataset import Dataset
+from Dataset import Dataset
 import statsmodels.api as sm
 from sklearn import linear_model
 from statsmodels.api import OLS, add_constant
 from scipy.stats import f
 from sklearn.feature_selection import chi2
 
+from fscores import f_regression, f_classif, f_chi2
 
+
+# Select the top k features based on a score function
 class SelectKBest:
     def __init__(self, score_func, k):
+        # Initialize the object with the score function and k value
         self.score_func = score_func
         self.k = k
+
+        # Initialize the F-statistic and p-value to None
         self.F_ = None
         self.p_ = None
 
+    # Fit the transformer to the data and calculate the F-statistic and p-value
     def fit(self, dataset, y=None):
+        # Call the score function on the dataset to get the F-statistic and p-value
         scores = self.score_func(dataset)
         self.F_, self.p_ = scores
+
+        # Return the transformer object
         return self
 
-    def transform(self,
-                  dataset):  # prende i pvalue piu piccoli e triene le colonne delle rispettive features,il resto lo scarta
+    # Transform the dataset by selecting the top k features based on the F-statistic or p-value
+    def transform(self, dataset):
+        # Check if the transformer has been fitted before
         if self.p_ is None:
             raise ValueError("The transformer has not been fitted yet.")
-        X= dataset.getinputmatrix()
+
+        # Get the input matrix from the dataset
+        X = dataset.getinputmatrix()
+
+        # Get the indices of the top k features based on the score function
         idx = np.argsort(self.p_)[:self.k]
+
+        # Select the top k features from the input matrix
         X = X[:, idx]
+
+        # Update the dataset's features and input matrix with the selected features
         dataset.features = [dataset.features[index] for index in idx]
         dataset.setinputmatrix(X)
 
-    def fit_transform(self, X, y=None):
-        self.fit(X, y)
-        return self.transform(X, y)
+    # Fit the transformer to the data and transform it in one step
+    def fit_transform(self, dataset, y=None):
+        # Fit the transformer to the data
+        self.fit(dataset, y)
 
-
-def f_classif(dataset):
-    X=dataset.getinputmatrix()
-    y=dataset.y
-    classes= np.unique(y)
-    groups = [X[dataset.y == c] for c in classes]
-    F, p = f_oneway(*groups)
-    return(F,p)
-
-
-def f_regression(dataset):
-    X=dataset.getinputmatrix()
-    model = OLS(dataset.y, X).fit()
-    return None, model.pvalues
-def f_chi2(dataset):
-    X=dataset.getinputmatrix()
-    chi2_scores, p_values = chi2(X, dataset.y)
-    return chi2_scores, p_values
+        # Transform the data by selecting the top k features based on the F-statistic or p-value
+        return self.transform(dataset, y)
 
 
 if __name__ == '__main__':

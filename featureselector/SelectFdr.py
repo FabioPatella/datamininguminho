@@ -2,34 +2,53 @@ import numpy as np
 from scipy.stats import f_oneway
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.linear_model import LinearRegression
-from dataset import Dataset
+from Dataset import Dataset
 import statsmodels.api as sm
 from sklearn import linear_model
 from statsmodels.api import OLS, add_constant
 from scipy.stats import f
 from sklearn.feature_selection import chi2
 
+from fscores import f_classif, f_chi2, f_regression
 
+
+# Select features based on the false discovery rate (FDR) procedure
 class SelectFdr:
-    def __init__(self, score_func ):
+    def __init__(self, score_func):
+        # Initialize the object with the score function to be used
         self.score_func = score_func
+
+        # Initialize the F-statistic and p-value to None
         self.F_ = None
         self.p_ = None
 
+    # Fit the transformer to the data and calculate the F-statistic and p-value
     def fit(self, dataset, y=None):
+        # Call the score function on the dataset to get the F-statistic and p-value
         scores = self.score_func(dataset)
         self.F_, self.p_ = scores
+
+        # Return the transformer object
         return self
 
-    def transform(self,
-                  dataset):  # prende i pvalue piu piccoli e triene le colonne delle rispettive features,il resto lo scarta
+    # Transform the dataset by selecting features based on the FDR procedure
+    def transform(self, dataset):
+        # Check if the transformer has been fitted before
         if self.p_ is None:
             raise ValueError("The transformer has not been fitted yet.")
-        benjamini_hochberg(self.p_,dataset)
 
-    def fit_transform(self, X, y=None):
-        self.fit(X, y)
-        return self.transform(X, y)
+        # Perform the Benjamini-Hochberg procedure on the p-values to control the FDR
+        benjamini_hochberg(self.p_, dataset)
+
+    # Fit the transformer to the data and transform it in one step
+    def fit_transform(self, dataset, y=None):
+        # Fit the transformer to the data
+        self.fit(dataset, y)
+
+        # Transform the data by selecting features based on the FDR procedure
+        return self.transform(dataset, y)
+
+
 def benjamini_hochberg(p_values,dataset, alpha=0.05):
         """
         Benjamini-Hochberg method for controlling the false discovery rate (FDR).
@@ -66,27 +85,6 @@ def benjamini_hochberg(p_values,dataset, alpha=0.05):
         dataset.x=dataset.x[:-k]
 
 
-def f_classif(dataset):
-    X=dataset.getinputmatrix()
-    y=dataset.y
-    classes= np.unique(y)
-    groups = [X[dataset.y == c] for c in classes]
-    print(groups)
-    F, p = f_oneway(*groups)
-    print(p)
-    return(F,p)
-
-
-def f_regression(dataset):
-    X=dataset.getinputmatrix()
-    print(X)
-    print(dataset.y)
-    model = OLS(dataset.y, X).fit()
-    return None, model.pvalues
-def f_chi2(dataset):
-    X=dataset.getinputmatrix()
-    chi2_scores, p_values = chi2(X, dataset.y)
-    return chi2_scores, p_values
 
 
 if __name__ == '__main__':
@@ -97,9 +95,9 @@ if __name__ == '__main__':
     y = np.array([2, 4, 6, 8, 10])
     dataset = Dataset(X, y, ['feat1', 'feat2','feat3','feat4'], 'output')
     dataset.describe()
-    selectk = SelectFdr(f_regression)
-    selectk = selectk.fit(dataset)
-    selectk.transform(dataset)
+    selectfdr = SelectFdr(f_regression)
+    selectfdr = selectfdr.fit(dataset)
+    selectfdr.transform(dataset)
     dataset.describe()
 
     #anova test
@@ -108,9 +106,9 @@ if __name__ == '__main__':
     y = np.array([2, 4, 4, 8, 10])
     dataset = Dataset(X, y, ['feat1', 'feat2','feat3'], 'output')
     dataset.describe()
-    selectk = SelectFdr(f_classif)
-    selectk = selectk.fit(dataset)
-    selectk.transform(dataset)
+    selectfdr = SelectFdr(f_classif)
+    selectfdr = selectfdr.fit(dataset)
+    selectfdr.transform(dataset)
     dataset.describe()
     # chi2 test
     print("chi2 selection:")
@@ -118,7 +116,8 @@ if __name__ == '__main__':
     y = np.array([2, 4, 4, 8, 10])
     dataset = Dataset(X, y, ['feat1', 'feat2'], 'output')
     dataset.describe()
-    selectk = SelectFdr(f_chi2)
-    selectk = selectk.fit(dataset)
-    selectk.transform(dataset)
+    selectfdr = SelectFdr(f_chi2)
+    selectfdr = selectfdr.fit(dataset)
+    selectfdr.transform(dataset)
     dataset.describe()
+    
