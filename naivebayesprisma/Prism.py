@@ -4,12 +4,26 @@ import numpy as np
 
 class Prism:
     def __init__(self, valueencoding, columnnames):
+        """
+            Initializes a new instance of the Prism class.
+            Args:
+            - valueencoding (dict): a dictionary containing the encoded values for each attribute
+            - columnnames (list): a list of the names of the columns in the dataset
+            """
         self.attribute_names = None
         self.rules = []
         self.valueencoding = {value: key for key, value in valueencoding.items()}
         self.columnnames = columnnames
 
     def fit(self, X, y):
+        """
+            Fits the model to the dataset.
+
+            Args:
+            - X (array): a numpy array containing the features of the dataset
+            - y (array): a numpy array containing the labels of the dataset
+
+            """
         self.X = X
         self.y = y
         self.probabilities = {}
@@ -25,6 +39,18 @@ class Prism:
         print(self.rules)
 
     def remove_instances(self, X, y, rule):
+        """
+           Removes instances from the dataset that do not satisfy the rule.
+
+           Args:
+           - X (array): a numpy array containing the features of the dataset
+           - y (array): a numpy array containing the labels of the dataset
+           - rule (list): a list of tuples representing the rule
+
+           Returns:
+           - newX (array): a numpy array containing the features of the filtered dataset
+           - newy (array): a numpy array containing the labels of the filtered dataset
+        """
         xrows = []
         newy = []
         for indexrow in range(X.shape[0]):
@@ -42,6 +68,13 @@ class Prism:
         return newX, newy
 
     def computerule(self, X, y, class_label, featurevaluelist):
+        """
+         Computes a rule for the specified class label.
+        :param X:a numpy array containing the features of the dataset
+        :param y: a numpy array containing the output label of the dataset
+        :param class_label: the class label for the speficic computation
+        :param featurevaluelist: a list of current feature value mapping
+        """
         stop = all(element == class_label for element in y)
         if (stop):
             self.rules.append((featurevaluelist, class_label))
@@ -64,6 +97,11 @@ class Prism:
         self.computerule(newX, newY, class_label, featurevaluelist)
 
     def find_max_prob(self, prob_dict):
+        """
+        Function to find the feature with the maximum probability
+        :param prob_dict: dictionary conataining probabilities
+        :return: a pair feature value with maximum probability
+        """
         max_prob = 0.0
         max_feature = None
         max_value = None
@@ -78,6 +116,9 @@ class Prism:
         return max_feature, max_value
 
     def convertprobabilities(self):
+        """
+        Function to convert probabilities to the original values of the features and print them
+        """
         converted_dict = {}
         index = 0
         for keyfeature in self.probabilities:
@@ -91,6 +132,9 @@ class Prism:
         print(converted_dict)
 
     def predict(self, sample):
+        """
+        Function to predict the class label of a sample using the rules generated from fit() function
+        """
         for rule in self.rules:
             applicable = True
             for featurevalue in rule[0]:
@@ -100,6 +144,9 @@ class Prism:
             if applicable: return rule[1]
 
     def __repr__(self):
+        """
+         print the generated rules
+        """
 
         for rule in self.rules:
             print("If", end="")

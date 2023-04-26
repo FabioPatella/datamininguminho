@@ -15,6 +15,23 @@ import pandas as pd
 
 class NaiveBayesClassifier:
     def __init__(self, pseudocount=0, use_log_probs=False):
+        """
+               Initialize Naive Bayes classifier with given parameters.
+
+               Args:
+                   pseudocount (int): Laplace smoothing pseudocount to avoid zero probability for features not present in a class.
+                   use_log_probs (bool): If true, use log probabilities for numerical stability.
+
+               Attributes:
+                   pseudocount (int): Laplace smoothing pseudocount to avoid zero probability for features not present in a class.
+                   use_log_probs (bool): If true, use log probabilities for numerical stability.
+                   class_counts (defaultdict(int)): Dictionary that keeps track of number of records for each class.
+                   feature_counts (defaultdict(defaultdict(np.array))): Dictionary that keeps track of count of feature values for each class.
+                   feature_probs (dict): Dictionary that stores probability of each feature value for each class.
+                   classes (list): List of unique class labels.
+                   columnnames (list): List of column names of input data.
+
+               """
         self.pseudocount = pseudocount
         self.use_log_probs = use_log_probs
         self.class_counts = None
@@ -24,6 +41,15 @@ class NaiveBayesClassifier:
         self.columnnames=None
 
     def fit(self, X, y,columnnames):
+        """
+               Fit the Naive Bayes classifier to the input data.
+
+               Args:
+                   X (array-like): Input data of shape (n_samples, n_features).
+                   y (array-like): Target labels of shape (n_samples,).
+                   columnnames (list): List of column names of input data.
+
+               """
         self.columnnames=columnnames
         X = pd.DataFrame(X,columns=columnnames)
         self.class_counts = defaultdict(int) #dictionary that returns 0 when a non-existing key is accessed
@@ -52,6 +78,16 @@ class NaiveBayesClassifier:
                                 class_counts + 2 * self.pseudocount)
 
     def predict(self, X):
+        """
+                Predict the class labels of the input data.
+
+                Args:
+                    X (array-like): Input data of shape (n_samples, n_features).
+
+                Returns:
+                    predictions (list): List of predicted class labels.
+
+                """
         X = pd.DataFrame(X, columns=self.columnnames)
         predictions = []
         for _, row in X.iterrows():
@@ -68,6 +104,10 @@ class NaiveBayesClassifier:
         return predictions
 
     def __repr__(self,valueencoding):
+        """
+        print a representation of the generated rules
+        :param valueencoding: value encoding for obtainign a more meaningful representation
+        """
         valueencoding = {value: key for key, value in valueencoding.items()}
         feature_probs={}
         for featurekey in self.feature_probs.keys():
