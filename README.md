@@ -17,9 +17,7 @@ Implemented optional features:
 3)decision trees : optional features implementation is in progress. Tested with 90% coverage
 
 
-4)NaiveBayes&Prism: implemented Pseudocounts for the Naive Bayes classifier, option to use logarithms in the constructor and  Naive Bayes for text classification
-                    
-                    testing with 90% coverage
+4)NaiveBayes&Prism: implemented Pseudocounts for the Naive Bayes classifier, option to use logarithms in the constructor and  Naive Bayes for text classificatio  testing with 90% coverage
 
 
 5)Apriori: FP trees and fb apriori algorithm in progress
