@@ -10,14 +10,16 @@ Implemented optional features:
  testing with 85-90% coverage
  
  
-2)featureselector:Selectpercentile,SelectFdr,chi2 score function
+2)featureselector: implemented Selectpercentile,SelectFdr,chi2 score function
    tested  with coverage 90-95%
    
    
 3)decision trees : optional features implementation is in progress. Tested with 90% coverage
 
 
-4)NaiveBayes&Prism: Pseudocounts for the Naive Bayes classifier  , Have an option to use logarithms in the constructor.  Naive Bayes for text classification is in progress
+4)NaiveBayes&Prism: implemented Pseudocounts for the Naive Bayes classifier, option to use logarithms in the constructor and  Naive Bayes for text classification
+                    
+                    testing with 90% coverage
 
 
 5)Apriori: FP trees and fb apriori algorithm in progress
