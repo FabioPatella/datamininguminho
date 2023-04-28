@@ -8,6 +8,8 @@ class TransactionDataset:
     def __init__(self, transactions):
         self.transactions = transactions
         self.frequent_items = None
+    def get_transactions(self):
+        return self.transactions
 
     def get_frequent_items(self, minsup):
         # count the frequency of each item
@@ -56,6 +58,17 @@ class TransactionDataset:
         # compute the support as the count of transaction containing the item
         support = count
         return support
+
+    def get_item_counts(self):
+        # count the frequency of each item in all transactions
+        item_counts = {}
+        for transaction in self.transactions:
+            for item in transaction:
+                if item in item_counts:
+                    item_counts[item] += 1
+                else:
+                    item_counts[item] = 1
+        return item_counts
 
 
 # Press the green button in the gutter to run the script.
