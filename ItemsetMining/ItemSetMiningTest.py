@@ -2,6 +2,7 @@ import unittest
 
 from AprioriAlgorithm import AprioriAlgorithm
 from AssociationRules import AssociationRules
+from FPTree import FPTree
 from TransactionDataset import TransactionDataset
 
 
@@ -41,6 +42,19 @@ class ItemSetMiningTest(unittest.TestCase):
         # generate the frequent itemsets using the Apriori algorithm
         self.assertEqual(apriori_algorithm.frequent_itemsets,[[1],[2],[3],[5],[6], [1, 3],[1, 5],
             [1, 6],[3, 2],[3, 5],[5, 2],[3, 5, 2]])
+    def testfptree(self):
+         transactions = [
+             ['E', 'K', 'M', 'N', 'O', 'Y'],
+             ['D', 'E', 'K', 'N', 'O', 'Y'],
+             ['A', 'E', 'K', 'M'],
+             ['C', 'K', 'M', 'U', 'Y'],
+             ['C', 'E', 'I', 'K', 'O', 'O']
+         ]
+
+         # create a TransactionDataset object
+         dataset = TransactionDataset(transactions)
+         fptree = FPTree(dataset, 3)
+         self.assertEquals(fptree.get_frequent_patterns(),{'M': [(['K', 'M'], 3)], 'Y': [(['E', 'Y'], 2), (['K', 'Y'], 2), (['O', 'Y'], 2), (['E', 'K', 'Y'], 2), (['E', 'O', 'Y'], 2), (['K', 'O', 'Y'], 2), (['E', 'K', 'O', 'Y'], 2)], 'E': [(['K', 'E'], 4)], 'O': [(['E', 'O'], 3), (['K', 'O'], 3), (['E', 'K', 'O'], 3)]})
 
 
 if __name__ == '__main__':
