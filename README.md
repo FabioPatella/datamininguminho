@@ -20,6 +20,4 @@ Implemented optional features:
 4)NaiveBayes&Prism: implemented Pseudocounts for the Naive Bayes classifier, option to use logarithms in the constructor and  Naive Bayes for text classificatio  testing with 90% coverage
 
 
-5)Apriori: FP trees and fb apriori algorithm in progress
-           testing in progress
-
+5)Apriori: FP trees and fb apriori algorithm implemented with testing 90% coverage
