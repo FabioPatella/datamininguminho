@@ -60,6 +60,28 @@ class TreeTest(unittest.TestCase):
         decisiontree = DecisionTree(max_depth=1)
         decisiontree.fit(self.X, self.y)
         self.assertEqual(decisiontree.get_tree(), {0: {12: 11, 13: 10, 14: 11}})
+    def testpredict(self):
+        decisiontree = DecisionTree()
+        decisiontree.fit(self.X, self.y)
+        outlook_postpruning = np.array([12, 13, 14, 13])
+        temperature_postpruning = np.array([4, 15, 4, 4])
+        humidity_postpruning = np.array([7, 6, 6, 7])
+        wind_postpruning = np.array([9, 9, 9, 8])
+        y_postpruning = np.array([11, 11, 10, 10])
+        X = np.vstack((outlook_postpruning, temperature_postpruning, humidity_postpruning, wind_postpruning)).T
+        self.assertEqual(decisiontree.predict(X),[11,11,10,10])
+    def test_reduce_error_pruning(self):
+        decisiontree = DecisionTree()
+        decisiontree.fit(self.X, self.y)
+        outlook_postpruning = np.array([12, 13, 14, 13])
+        temperature_postpruning = np.array([4, 15, 4, 4])
+        humidity_postpruning = np.array([7, 6, 6, 7])
+        wind_postpruning = np.array([9, 9, 9, 8])
+        y_postpruning = np.array([11, 11, 10, 10])
+        Xval = np.vstack((outlook_postpruning, temperature_postpruning, humidity_postpruning, wind_postpruning)).T
+        decisiontree.reduce_error_pruning(Xval)
+        self.assertEquals(decisiontree.get_tree(), {0: {12: 11, 13: {2: {6: 11, 7: 10}}, 14: 10}})
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -1,8 +1,12 @@
 import numpy as np
+from scipy.stats import chi2_contingency
+import pandas as pd
+
+from DTNode import DTNode
 
 
 class DecisionTree:
-    def __init__(self, criterion='entropy', max_depth=None):
+    def __init__(self, criterion='entropy', max_depth=None,prepruningindependence=False,confidence=0.05):
         """
                 Initialize a DecisionTree object with the given parameters.
 
@@ -10,9 +14,12 @@ class DecisionTree:
                 - criterion: the splitting criterion to use. Default is 'entropy'.
                 - max_depth: the maximum depth of the decision tree. Default is None.
                 """
+        self.puretree = None
         self.criterion = criterion
         self.max_depth = max_depth
         self.tree = None
+        self.prepruningindependence=prepruningindependence
+        self.confidence=confidence
 
 
     def fit(self, X, y):
@@ -28,7 +35,7 @@ class DecisionTree:
                 """
         self.tree = self._build_tree(X, y)
 
-    def predict(self, X):
+    def predict(self, X,tree=None):
         """
                Predict the label of each sample in X using the trained decision tree.
 
@@ -38,10 +45,134 @@ class DecisionTree:
                Returns:
                - y_pred: predicted labels, a numpy array of shape (number of samples,).
                """
-        return np.array([self._predict(x, self.tree) for x in X])
+        results=[]
+        for sample in X:
+            if tree is not None: results.append(self._predict(sample, tree))
+            else: results.append(self._predict(sample,self.tree))
+        return results
+    def _predict(self,sample,tree):
+        feature = list(tree)[0]  # getting the feature
+        value = sample[feature]
+        subtree = tree[feature]
+        result = subtree[value]
+        if isinstance(result, dict): return self._predict(sample,result)
+        else: return result
 
     def get_tree(self):
         return self.tree
+    def convertdict(self):
+        """
+        obtain an equivalent representation of the tree with nodes class starting from a dictionary
+        """
+        feature = list(self.tree.keys())[0]
+        self.puretree= DTNode(feature)
+        for value in self.tree[feature].keys():
+            newnode=DTNode(value)
+            self.puretree.add_next(newnode)
+            newnode.set_previous(self.puretree)
+            self._updateconversionfromdict(newnode,self.tree[feature][value])
+
+    def _updateconversionfromdict(self,node_,dictionary):
+        """
+        recursive private method to bui9ld nodes tree starting from a dictionary
+        :param node_: current node
+        :param dictionary:  current dictionary
+        :return: a sub dictionary( in the end the final dictionary)
+        """
+        if  isinstance(dictionary, dict):
+            feature = list(dictionary)[0]
+            newnode_ = DTNode(feature)
+            node_.add_next(newnode_)
+            newnode_.set_previous(node_)
+            #newnode_.set_previous(node_.get_previous())
+            for value in dictionary[feature].keys():
+                newnodeforvalue=DTNode(value)
+                newnodeforvalue.set_previous(newnode_)
+                newnode_.add_next(newnodeforvalue)
+                self._updateconversionfromdict(newnodeforvalue,dictionary[feature][value])
+
+        else:
+            newnode_=DTNode(dictionary)
+            node_.add_next(newnode_)
+            newnode_.set_leaf(True)
+            newnode_.set_previous(node_)
+            #newnode_.set_previous(node_.get_previous())
+
+    def convertpuretreetodict(self,currentnode):
+        """
+        convert the nodes tree into a dictionary
+        """
+        if(currentnode.isLeaf()): return currentnode.get_value()
+        else:
+         dict={}
+         feature=currentnode.get_value()
+         dict[feature]={}
+         for child in currentnode.get_next():
+             if(len(child.get_next())>1):
+              dict[feature][child.get_value()]=self.convertpuretreetodict(child.get_next()[0])
+
+             else:     dict[feature][child.get_value()]=self.convertpuretreetodict(child.get_next()[0])
+
+         return dict
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def reduce_error_pruning(self,validation_set):
+        """
+        remove the deepest leaf in the tree until the performance of the new model get worse
+        :param validation_set: validation data
+        """
+        self.convertdict()
+        predictions= self.predict(validation_set)
+        newpredictions=predictions
+        while True:
+         if predictions != newpredictions:
+             self.tree=dict
+             self.convertdict()
+             break
+         else:
+          dict=self.convertpuretreetodict(self.puretree)
+          node,deapth=self.find_deapest_leaf(self.puretree,0)
+          father=node.get_previous()
+          grandfather=father.get_previous()
+          grand_grandfather=grandfather.get_previous()
+          grand_grandfather.reset_next()
+          grand_grandfather.add_next(node)
+          newdict=self.convertpuretreetodict(self.puretree)
+          newpredictions= self.predict(validation_set,newdict)
+
+
+
+
+
+    def find_deapest_leaf(self,node,deapth):
+        """
+         returns the deepest leaf in a node tree
+        :param node: current node
+        :param deapth: current deapth
+        :return: leaf and deapth
+        """
+        if(node.isLeaf()): return node,deapth+1
+        else:
+         max=0
+         bestnode=None
+         for child in node.get_next():
+            candidatenode,child_deapth= self.find_deapest_leaf(child,deapth+1)
+            if child_deapth>=max:
+                max=child_deapth
+                bestnode=candidatenode
+         return bestnode,child_deapth
 
     def _build_tree(self, X, y, depth=0):
         """
@@ -65,12 +196,17 @@ class DecisionTree:
         if number_samples < 2 or depth == self.max_depth:
             return self._resolve_conflict(y)
 
+
+
         # Select best attribute
         info_gains = []
         for feature in range(number_features):
             info_gain = self._information_gain(X, y, feature)
             info_gains.append(info_gain)
         best_feature_index = np.argmax(info_gains)
+        if self.prepruningindependence:
+            if(chi2_test(X[:, best_feature_index],y))>self.confidence:
+             return self._resolve_conflict(y)
 
         # Build subtrees
         tree = {best_feature_index: {}}
@@ -83,22 +219,7 @@ class DecisionTree:
 
         return tree
 
-    def _predict(self, x, tree):
-        if isinstance(tree, np.ndarray):
-            # if tree is already a leaf node, return the class label
-            return tree
-        # get the feature to split on for this node
-        feature = next(iter(tree))
-        # get the feature value for the current example
-        value = x[feature]
-        # check if the feature value is present in the tree
-        if value not in tree[feature]:
-            # if not, resolve the conflict by selecting the most frequent class label
-            return self._resolve_conflict(list(tree[feature].values()))
-        # get the subtree corresponding to the feature value
-        sub_tree = tree[feature][value]
-        # recursively predict using the subtree
-        return self._predict(x, sub_tree)
+
 
     def _information_gain(self, X, y, feature):
         # Calculate the information gain of a given feature
@@ -163,6 +284,7 @@ class DecisionTree:
 def view_tree(tree,embedded_values):
      easy_encoding= {value: key for key, value in embedded_values.items()}
      count=0
+     if not  isinstance(tree,dict): return tree
      if tree is not None :
          for key in tree.keys():
              if count==0: print('{',end='')
@@ -179,6 +301,20 @@ def view_tree(tree,embedded_values):
                  print(easy_encoding[value],end='')
 
              if count != tree.keys().__len__():print(",",end='')
+def chi2_test(X, y): #An often quoted guideline for the validity of this calculation is that the test should be used only if the observed and expected frequencies in each cell are at least 5.
+    contingency_table = pd.crosstab(X,y)
+    _, pval, _, _ = chi2_contingency(contingency_table)  #pass to chi2 function a contingency table
+    return pval
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -223,6 +359,7 @@ if __name__ == '__main__':
         , 'High': 7, 'Weak': 8,
         'Strong': 9, 'No': 10, 'Yes': 11, 'outlook': 0, 'temperature': 1, 'humidity': 2, 'wind': 3
     }
+
     # testing entropy
     print("entropy decision tree:")
     decisiontree= DecisionTree()
@@ -252,3 +389,21 @@ if __name__ == '__main__':
     decisiontree.fit(X, y)
     print(decisiontree.get_tree())
     view_tree(decisiontree.get_tree(), value_encoding)
+
+    #post-pruning
+    print()
+    print("post-pruning by reduce error:")
+    outlook_postpruning = np.array([12, 13, 14, 13])
+    temperature_postpruning = np.array([4, 15, 4, 4])
+    humidity_postpruning = np.array([7, 6, 6, 7])
+    wind_postpruning = np.array([9, 9, 9, 8])
+    y_postpruning=np.array([11,11,10,10])
+    decisiontree = DecisionTree()
+    decisiontree.fit(X, y)
+    Xval = np.vstack((outlook_postpruning, temperature_postpruning, humidity_postpruning, wind_postpruning)).T
+    print("the tree before the pruning:")
+    view_tree(decisiontree.get_tree(),embedded_values=value_encoding)
+    decisiontree.reduce_error_pruning(Xval)
+    print()
+    print("the tree after the pruning")
+    view_tree(decisiontree.get_tree(), embedded_values=value_encoding)
