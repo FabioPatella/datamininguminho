@@ -21,3 +21,5 @@ Implemented optional features:
 
 
 5)Apriori: FP trees and fb apriori algorithm implemented with testing 90% coverage
+
+6)Classificiationregression: implemented deep neural network and tested with 90% coverage
